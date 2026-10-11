@@ -1,0 +1,19 @@
+{
+  "name": "Tibetan 101 - Fast Track Reading Mastery",
+  "short_name": "LearnTibetan",
+  "description": "Learn to read Tibetan script in the fastest, most efficient and optimal way with syllable anatomy decoders, native audio drills, and interactive exercises.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#12141d",
+  "theme_color": "#881337",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "language", "books"]
+}
