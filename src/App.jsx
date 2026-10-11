@@ -7,12 +7,30 @@ import StackingAndAffixes from './components/StackingAndAffixes';
 import PracticeGrounds from './components/PracticeGrounds';
 import TracingCanvas from './components/TracingCanvas';
 import CheatSheetModal from './components/CheatSheetModal';
-import { BookOpen, Sparkles, HelpCircle, Heart, Share2, Compass, Award } from 'lucide-react';
+import { BookOpen, Sparkles, Heart } from 'lucide-react';
 import { audioEngine } from './utils/audioEngine';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('decoder'); // default to flagship decoder
+  const [activeTab, setActiveTab] = useState('decoder');
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
+
+  // Theme state: 'light' | 'dark'
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('tibetan_theme') || 'dark';
+  });
+
+  // Sync theme with document element
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+    localStorage.setItem('tibetan_theme', theme);
+  }, [theme]);
 
   // Gamification state persisted in localStorage
   const [xp, setXp] = useState(() => {
@@ -39,11 +57,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans selection:bg-amber-500 selection:text-stone-950">
+    <div className="min-h-screen bg-[#faf8f5] dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors duration-200 selection:bg-amber-500 selection:text-stone-950">
       {/* Sacred Himalayan Prayer Flags 5-Element Accent Strip */}
-      <div className="h-1.5 w-full flex">
+      <div className="h-1.5 w-full flex shadow-sm">
         <div className="flex-1 bg-sky-500" title="Space / Sky (Blue)"></div>
-        <div className="flex-1 bg-stone-100" title="Air / Wind (White)"></div>
+        <div className="flex-1 bg-stone-100 dark:bg-stone-200" title="Air / Wind (White)"></div>
         <div className="flex-1 bg-rose-600" title="Fire (Red)"></div>
         <div className="flex-1 bg-emerald-500" title="Water (Green)"></div>
         <div className="flex-1 bg-amber-400" title="Earth (Yellow)"></div>
@@ -55,6 +73,8 @@ export default function App() {
         setActiveTab={setActiveTab}
         xp={xp}
         streak={streak}
+        theme={theme}
+        setTheme={setTheme}
       />
 
       {/* Main App Container */}
@@ -79,7 +99,7 @@ export default function App() {
             setIsCheatSheetOpen(true);
             audioEngine.playClick();
           }}
-          className="flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-stone-950 font-bold text-xs sm:text-sm shadow-2xl shadow-rose-950 hover:scale-105 active:scale-95 transition-all group border border-amber-300/40"
+          className="flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-stone-950 font-bold text-xs sm:text-sm shadow-xl hover:scale-105 active:scale-95 transition-all group border border-amber-300/60"
         >
           <BookOpen className="w-4 h-4 text-stone-950 group-hover:rotate-6 transition-transform" />
           <span>Quick Cheat Sheet</span>
@@ -93,31 +113,31 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-stone-800/80 bg-stone-950/80 py-8 px-4 sm:px-6 text-xs text-stone-500 mt-12">
+      <footer className="border-t border-stone-200 dark:border-stone-800/80 bg-white/60 dark:bg-stone-950/80 py-8 px-4 sm:px-6 text-xs text-stone-500 mt-12 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
           <div className="flex items-center gap-3">
-            <span className="font-tibetan text-2xl text-amber-400">ཨོཾ་ཨཱཿཧཱུྃ</span>
+            <span className="font-tibetan text-2xl text-amber-600 dark:text-amber-400 font-bold">ཨོཾ་ཨཱཿཧཱུྃ</span>
             <div>
-              <p className="text-stone-300 font-semibold">
+              <p className="text-stone-800 dark:text-stone-300 font-semibold">
                 Learn Tibetan 101 • Progressive Web App
               </p>
-              <p className="text-[11px] text-stone-500">
-                Lhasa Standard Dialect • Classical Uchen Script (དབུ་ཅན) • Traditional Jor-lok
+              <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                Lhasa Standard Dialect • Windows Native Tibetan Speech Support • Classical Uchen Script (དབུ་ཅན)
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-stone-400">
+          <div className="flex items-center gap-4 text-stone-600 dark:text-stone-400">
             <button
               onClick={() => setIsCheatSheetOpen(true)}
-              className="hover:text-amber-300 transition"
+              className="hover:text-amber-600 dark:hover:text-amber-300 transition"
             >
               Grammar Summary
             </button>
             <span>•</span>
-            <span className="text-emerald-400 font-medium">Offline Ready PWA</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">Offline Ready PWA</span>
             <span>•</span>
-            <span className="flex items-center gap-1 text-stone-400">
+            <span className="flex items-center gap-1">
               Made with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 inline" /> for Dharma Students
             </span>
           </div>

@@ -27,8 +27,9 @@ export default function SyllableDecoder({ onAddXp }) {
     audioEngine.playClick();
   };
 
-  const handlePlaySound = (phonetic, tone) => {
-    audioEngine.playPhonetic(phonetic, tone);
+  const handlePlaySound = (phonetic, tone, tibetanWord) => {
+    const textToSpeak = tibetanWord || (activeSyllable ? activeSyllable.clean : inputText);
+    audioEngine.playPhonetic(phonetic, tone, textToSpeak);
     if (onAddXp) onAddXp(5);
   };
 
@@ -57,26 +58,26 @@ export default function SyllableDecoder({ onAddXp }) {
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Intro Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-rose-950/70 via-stone-900 to-amber-950/40 border border-rose-900/50 p-6 sm:p-8 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-rose-100/70 via-stone-50 to-amber-100/50 dark:from-rose-950/70 dark:via-stone-900 dark:to-amber-950/40 border border-stone-200 dark:border-rose-900/50 p-6 sm:p-8 shadow-sm dark:shadow-2xl transition-colors">
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/80 border border-amber-800/60 text-amber-300 text-xs font-semibold mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-300 text-xs font-semibold mb-3">
             <Sparkles className="w-3.5 h-3.5" />
             The Decryption Formula (སྦྱོར་ཀློག)
           </div>
-          <h2 className="font-title text-2xl sm:text-3xl font-extrabold text-amber-100 mb-2">
+          <h2 className="font-title text-2xl sm:text-3xl font-extrabold text-stone-900 dark:text-amber-100 mb-2">
             Tibetan Syllable Anatomy Decoder
           </h2>
-          <p className="text-stone-300 text-sm sm:text-base leading-relaxed">
+          <p className="text-stone-700 dark:text-stone-300 text-sm sm:text-base leading-relaxed">
             In Tibetan, letters don’t read purely left-to-right. They cluster like architectural cubes around a single central 
-            <strong className="text-amber-400 font-semibold"> Core Root Letter (མིང་གཞི)</strong>. 
+            <strong className="text-amber-700 dark:text-amber-400 font-semibold"> Core Root Letter (མིང་གཞི)</strong>. 
             Once you identify the Root, everything else clicks into place effortlessly!
           </p>
         </div>
 
         {/* Quick Sample Selector Chips */}
-        <div className="mt-6 pt-5 border-t border-stone-800/60">
-          <p className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-3">
+        <div className="mt-6 pt-5 border-t border-stone-200 dark:border-stone-800/60">
+          <p className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-3">
             Try Famous Sacred & Everyday Phrases:
           </p>
           <div className="flex flex-wrap gap-2">
@@ -86,12 +87,12 @@ export default function SyllableDecoder({ onAddXp }) {
                 onClick={() => handleSelectCuratedWord(w)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-2 ${
                   inputText === w.tibetan
-                    ? 'bg-rose-900 text-amber-200 border border-amber-500/50 shadow-md shadow-rose-950'
-                    : 'bg-stone-900/80 text-stone-300 hover:bg-stone-800 border border-stone-800'
+                    ? 'bg-rose-900 text-amber-100 border border-rose-700 shadow-md'
+                    : 'bg-white dark:bg-stone-900/80 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
                 }`}
               >
                 <span className="font-tibetan text-base">{w.tibetan}</span>
-                <span className="text-stone-400 text-[11px]">({w.phonetic})</span>
+                <span className="text-stone-500 dark:text-stone-400 text-[11px]">({w.phonetic})</span>
               </button>
             ))}
           </div>
@@ -99,7 +100,7 @@ export default function SyllableDecoder({ onAddXp }) {
       </div>
 
       {/* Input / Explorer Bar */}
-      <div className="bg-stone-900/90 border border-stone-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+      <div className="bg-white dark:bg-stone-900/90 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-xl transition-colors">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="flex-1 relative">
             <input
@@ -107,25 +108,25 @@ export default function SyllableDecoder({ onAddXp }) {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Type or paste Tibetan text (e.g. བཀྲ་ཤིས་ or བསྒྲུབས་)..."
-              className="w-full bg-stone-950 border border-stone-700/80 rounded-xl px-4 py-3 text-lg sm:text-xl font-tibetan text-amber-200 placeholder:text-stone-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50"
+              className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700/80 rounded-xl px-4 py-3 text-lg sm:text-xl font-tibetan text-stone-900 dark:text-amber-200 placeholder:text-stone-400 dark:placeholder:text-stone-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50"
             />
           </div>
           <button
             onClick={() => setInputText('')}
-            className="px-4 py-3 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold transition"
+            className="px-4 py-3 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-semibold transition"
           >
             Clear
           </button>
         </div>
 
         {/* Quick Tibetan Virtual Helpers for Mobile / Desktop without Tibetan keyboard */}
-        <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 text-xs text-stone-400 scrollbar-none">
-          <span className="text-[11px] font-semibold text-stone-400 shrink-0">Quick Insert:</span>
+        <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 text-xs text-stone-500 dark:text-stone-400 scrollbar-none">
+          <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 shrink-0">Quick Insert:</span>
           {['་', 'ི', 'ུ', 'ེ', 'ོ', 'ྱ', 'ྲ', 'ླ', 'ྭ', '།', 'བ', 'ས', 'ག', 'ད'].map((ch) => (
             <button
               key={ch}
               onClick={() => appendTibetanChar(ch)}
-              className="px-2.5 py-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500/50 font-tibetan text-amber-300 text-sm hover:scale-110 active:scale-95 transition"
+              className="px-2.5 py-1 rounded-lg bg-stone-100 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 hover:border-amber-500/50 font-tibetan text-stone-800 dark:text-amber-300 text-sm hover:scale-110 active:scale-95 transition"
             >
               {ch}
             </button>
@@ -163,18 +164,18 @@ export default function SyllableDecoder({ onAddXp }) {
       {activeSyllable ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Visual 7-Slot Anatomy Cube */}
-          <div className="lg:col-span-7 bg-stone-900/90 border border-stone-800/90 rounded-3xl p-6 sm:p-7 shadow-2xl relative">
+          <div className="lg:col-span-7 bg-white dark:bg-stone-900/90 border border-stone-200 dark:border-stone-800/90 rounded-3xl p-6 sm:p-7 shadow-sm dark:shadow-2xl relative transition-colors">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
                   Syllable Architecture
                 </span>
                 <div className="flex items-baseline gap-3 mt-1">
-                  <h3 className="font-tibetan text-4xl sm:text-5xl text-amber-300 font-bold tracking-wide">
+                  <h3 className="font-tibetan text-4xl sm:text-5xl text-stone-900 dark:text-amber-300 font-bold tracking-wide">
                     {activeSyllable.clean}
                   </h3>
-                  <span className="text-stone-400 text-lg font-medium">
-                    = <span className="text-amber-200 font-semibold">{activeSyllable.phoneticResult}</span>
+                  <span className="text-stone-500 dark:text-stone-400 text-lg font-medium">
+                    = <span className="text-amber-700 dark:text-amber-200 font-semibold">{activeSyllable.phoneticResult}</span>
                   </span>
                 </div>
               </div>
@@ -182,8 +183,8 @@ export default function SyllableDecoder({ onAddXp }) {
               {/* Sound & Chant Trigger */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => handlePlaySound(activeSyllable.phoneticResult, activeSyllable.calculatedTone)}
-                  className="p-3 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-600 text-stone-950 font-bold hover:scale-105 active:scale-95 shadow-lg shadow-rose-950 transition flex items-center gap-1.5"
+                  onClick={() => handlePlaySound(activeSyllable.phoneticResult, activeSyllable.calculatedTone, activeSyllable.clean)}
+                  className="p-3 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-600 text-stone-950 font-bold hover:scale-105 active:scale-95 shadow-md transition flex items-center gap-1.5"
                   title="Listen to Syllable Pronunciation"
                 >
                   <Volume2 className="w-5 h-5 text-stone-950" />
@@ -193,10 +194,10 @@ export default function SyllableDecoder({ onAddXp }) {
             </div>
 
             {/* The 7 Slot Visualization */}
-            <div className="bg-stone-950/80 rounded-2xl p-5 border border-stone-800/80 mb-6">
-              <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-4 flex items-center justify-between">
+            <div className="bg-stone-50 dark:bg-stone-950/80 rounded-2xl p-5 border border-stone-200 dark:border-stone-800/80 mb-6 transition-colors">
+              <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-4 flex items-center justify-between">
                 <span>The 7 Anatomical Positions:</span>
-                <span className="text-amber-400/90 font-mono text-[11px]">Center = Anchor</span>
+                <span className="text-amber-700 dark:text-amber-400/90 font-mono text-[11px]">Center = Anchor</span>
               </p>
 
               {/* Graphical Anatomy Cube */}
@@ -373,14 +374,14 @@ export default function SyllableDecoder({ onAddXp }) {
           </div>
 
           {/* Right Column: Traditional Jor-lok (Spelling Chant) Player */}
-          <div className="lg:col-span-5 bg-stone-900/90 border border-stone-800/90 rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col justify-between">
+          <div className="lg:col-span-5 bg-white dark:bg-stone-900/90 border border-stone-200 dark:border-stone-800/90 rounded-3xl p-6 sm:p-7 shadow-sm dark:shadow-2xl flex flex-col justify-between transition-colors">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">
                     Traditional Pedagogy
                   </span>
-                  <h4 className="font-title text-xl font-bold text-amber-100">
+                  <h4 className="font-title text-xl font-bold text-stone-900 dark:text-amber-100">
                     Spelling Chant (སྦྱོར་ཀློག)
                   </h4>
                 </div>
@@ -389,8 +390,8 @@ export default function SyllableDecoder({ onAddXp }) {
                   disabled={isChanting}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                     isChanting
-                      ? 'bg-stone-800 text-stone-500 cursor-not-allowed'
-                      : 'bg-rose-900/80 hover:bg-rose-800 text-amber-200 border border-rose-700/60 shadow-md shadow-rose-950'
+                      ? 'bg-stone-200 dark:bg-stone-800 text-stone-400 cursor-not-allowed'
+                      : 'bg-rose-900 text-amber-100 dark:bg-rose-900/80 dark:text-amber-200 hover:brightness-110 shadow-md'
                   }`}
                 >
                   <Play className={`w-3.5 h-3.5 ${isChanting ? 'animate-spin' : ''}`} />
@@ -398,7 +399,7 @@ export default function SyllableDecoder({ onAddXp }) {
                 </button>
               </div>
 
-              <p className="text-xs text-stone-400 mb-4 leading-relaxed">
+              <p className="text-xs text-stone-600 dark:text-stone-400 mb-4 leading-relaxed">
                 Tibetan children master reading within weeks through rhythmic chanting. Watch each step assemble the sound:
               </p>
 
@@ -409,14 +410,14 @@ export default function SyllableDecoder({ onAddXp }) {
                     key={idx}
                     className={`p-3 rounded-xl border transition-all text-xs flex items-center justify-between ${
                       chantingStep === idx
-                        ? 'bg-amber-500 text-stone-950 border-amber-400 shadow-lg shadow-amber-950 scale-102 font-bold'
-                        : 'bg-stone-950/60 border-stone-800/70 text-stone-300'
+                        ? 'bg-amber-500 text-stone-950 border-amber-400 shadow-md scale-102 font-bold'
+                        : 'bg-stone-50 dark:bg-stone-950/60 border-stone-200 dark:border-stone-800/70 text-stone-800 dark:text-stone-300'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <span
                         className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                          chantingStep === idx ? 'bg-stone-950 text-amber-400' : 'bg-stone-800 text-stone-400'
+                          chantingStep === idx ? 'bg-stone-950 text-amber-400' : 'bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400'
                         }`}
                       >
                         {idx + 1}
@@ -425,9 +426,9 @@ export default function SyllableDecoder({ onAddXp }) {
                     </div>
 
                     <button
-                      onClick={() => handlePlaySound(step.sound, 'high')}
+                      onClick={() => handlePlaySound(step.sound, 'high', activeSyllable.clean)}
                       className={`p-1 rounded-lg ${
-                        chantingStep === idx ? 'text-stone-950 hover:bg-amber-600' : 'text-stone-500 hover:text-amber-400'
+                        chantingStep === idx ? 'text-stone-950 hover:bg-amber-600' : 'text-stone-400 hover:text-amber-600 dark:hover:text-amber-400'
                       }`}
                     >
                       <Volume2 className="w-3.5 h-3.5" />
@@ -438,21 +439,21 @@ export default function SyllableDecoder({ onAddXp }) {
             </div>
 
             {/* Final Target Banner */}
-            <div className="mt-6 p-4 rounded-2xl bg-gradient-to-r from-rose-950/90 to-stone-950 border border-rose-800/50 flex items-center justify-between">
+            <div className="mt-6 p-4 rounded-2xl bg-gradient-to-r from-rose-100/70 via-stone-50 to-amber-100/50 dark:from-rose-950/90 dark:to-stone-950 border border-rose-200 dark:border-rose-800/50 flex items-center justify-between transition-colors">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 block">
                   Final Decoded Result
                 </span>
-                <span className="text-2xl font-black text-amber-300">
+                <span className="text-2xl font-black text-stone-900 dark:text-amber-300">
                   {activeSyllable.phoneticResult}
                 </span>
-                <span className="text-xs text-stone-400 block mt-0.5">
+                <span className="text-xs text-stone-500 dark:text-stone-400 block mt-0.5">
                   Tone: {activeSyllable.calculatedTone} flat/falling
                 </span>
               </div>
               <button
-                onClick={() => handlePlaySound(activeSyllable.phoneticResult, activeSyllable.calculatedTone)}
-                className="p-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold transition shadow-lg shadow-amber-950"
+                onClick={() => handlePlaySound(activeSyllable.phoneticResult, activeSyllable.calculatedTone, activeSyllable.clean)}
+                className="p-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold transition shadow-md"
               >
                 <Volume2 className="w-5 h-5" />
               </button>
@@ -460,8 +461,8 @@ export default function SyllableDecoder({ onAddXp }) {
           </div>
         </div>
       ) : (
-        <div className="text-center py-12 bg-stone-900/40 rounded-3xl border border-stone-800">
-          <p className="text-stone-400">Please enter Tibetan text above to begin decoding.</p>
+        <div className="text-center py-12 bg-white dark:bg-stone-900/40 rounded-3xl border border-stone-200 dark:border-stone-800">
+          <p className="text-stone-500 dark:text-stone-400">Please enter Tibetan text above to begin decoding.</p>
         </div>
       )}
     </div>

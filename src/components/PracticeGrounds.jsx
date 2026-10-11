@@ -262,11 +262,11 @@ export default function PracticeGrounds({ onAddXp, onIncrementStreak }) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    audioEngine.playPhonetic(currentCard.phonetic, currentCard.tone);
+                    audioEngine.playPhonetic(currentCard.phonetic, currentCard.tone, currentCard.tibetan);
                   }}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition shadow-md"
                 >
-                  <Volume2 className="w-4 h-4" /> Listen
+                  <Volume2 className="w-4 h-4" /> Listen Native Sound
                 </button>
               </div>
             )}

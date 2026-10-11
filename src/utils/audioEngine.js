@@ -1,23 +1,127 @@
-// High-Clarity Tibetan Phonetic Audio Engine & Speech Synthesizer
+// High-Clarity Tibetan Audio Engine & Windows Native Tibetan Voice Engine
 
 class TibetanAudioEngine {
   constructor() {
     this.ctx = null;
     this.voices = [];
-    this.isVoicesLoaded = false;
+    this.selectedVoice = null;
+    this.isTibetanVoiceAvailable = false;
+    this.voiceMode = 'auto'; // 'auto', 'tibetan', 'phonetic'
+    this.listeners = new Set();
+
     this.initVoices();
   }
 
   initVoices() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      this.voices = window.speechSynthesis.getVoices();
+      // Immediate load attempt
+      this.refreshVoices();
+
+      // Async voice load listener
       if (window.speechSynthesis.onvoiceschanged !== undefined) {
         window.speechSynthesis.onvoiceschanged = () => {
-          this.voices = window.speechSynthesis.getVoices();
-          this.isVoicesLoaded = true;
+          this.refreshVoices();
         };
       }
     }
+  }
+
+  refreshVoices() {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return [];
+    this.voices = window.speechSynthesis.getVoices() || [];
+
+    // Search for Native Tibetan voice installed in Windows / OS
+    const tibetanVoice = this.voices.find((v) => {
+      const lang = (v.lang || '').toLowerCase();
+      const name = (v.name || '').toLowerCase();
+      return (
+        lang.startsWith('bo') ||
+        lang.includes('tibt') ||
+        name.includes('tibetan') ||
+        name.includes('bod') ||
+        name.includes('བོད་')
+      );
+    });
+
+    if (tibetanVoice) {
+      this.isTibetanVoiceAvailable = true;
+      if (!this.selectedVoice || this.voiceMode === 'auto') {
+        this.selectedVoice = tibetanVoice;
+      }
+    } else {
+      this.isTibetanVoiceAvailable = false;
+    }
+
+    this.notifyListeners();
+    return this.voices;
+  }
+
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  notifyListeners() {
+    this.listeners.forEach((fn) => {
+      try {
+        fn({
+          voices: this.voices,
+          selectedVoice: this.selectedVoice,
+          isTibetanVoiceAvailable: this.isTibetanVoiceAvailable,
+          voiceMode: this.voiceMode,
+        });
+      } catch (e) {}
+    });
+  }
+
+  setVoiceMode(mode) {
+    this.voiceMode = mode;
+    if (mode === 'tibetan') {
+      const tibVoice = this.voices.find((v) => (v.lang || '').toLowerCase().startsWith('bo') || (v.name || '').toLowerCase().includes('tibetan'));
+      if (tibVoice) this.selectedVoice = tibVoice;
+    } else if (mode === 'phonetic') {
+      const fallback = this.getFallbackVoice();
+      if (fallback) this.selectedVoice = fallback;
+    }
+    this.notifyListeners();
+  }
+
+  setSelectedVoice(voice) {
+    this.selectedVoice = voice;
+    this.notifyListeners();
+  }
+
+  getNativeTibetanVoice() {
+    return this.voices.find((v) => {
+      const lang = (v.lang || '').toLowerCase();
+      const name = (v.name || '').toLowerCase();
+      return (
+        lang.startsWith('bo') ||
+        lang.includes('tibt') ||
+        name.includes('tibetan') ||
+        name.includes('bod') ||
+        name.includes('བོད་')
+      );
+    });
+  }
+
+  getFallbackVoice() {
+    // Look for clear natural English or Indic voice
+    const naturalVoice = this.voices.find(
+      (v) =>
+        (v.lang.startsWith('en') &&
+          (v.name.includes('Natural') ||
+            v.name.includes('Google') ||
+            v.name.includes('Samantha') ||
+            v.name.includes('Daniel') ||
+            v.name.includes('Karen') ||
+            v.name.includes('Guy'))) ||
+        v.lang.startsWith('hi') ||
+        v.lang.startsWith('ne')
+    );
+    if (naturalVoice) return naturalVoice;
+
+    return this.voices.find((v) => v.lang.startsWith('en')) || this.voices[0] || null;
   }
 
   initContext() {
@@ -32,50 +136,21 @@ class TibetanAudioEngine {
     }
   }
 
-  // Find the clearest and most natural voice available
-  getBestVoice() {
-    if (!this.voices || this.voices.length === 0) {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        this.voices = window.speechSynthesis.getVoices();
-      }
-    }
-
-    // 1. Look for Tibetan voice if available
-    const tibetanVoice = this.voices.find(v => v.lang.startsWith('bo'));
-    if (tibetanVoice) return tibetanVoice;
-
-    // 2. Look for natural English or Indic voices (Hindi, Nepali) that articulate Sanskrit/Tibetan phonetics crisply
-    const preferredVoice = this.voices.find(v => 
-      (v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Karen'))) ||
-      v.lang.startsWith('hi') || v.lang.startsWith('ne')
-    );
-    if (preferredVoice) return preferredVoice;
-
-    // 3. Fallback to any English or default voice
-    const englishVoice = this.voices.find(v => v.lang.startsWith('en'));
-    return englishVoice || this.voices[0] || null;
-  }
-
-  // Clean phonetic text for crisp, intelligible speech
+  // Convert Roman phonetic to pristine speech tokens if fallback is needed
   normalizePhoneticForSpeech(input) {
     if (!input) return 'Ah';
-
     let str = input.toString();
 
-    // Remove editorial notes, parentheses, brackets, slashes
     str = str.replace(/\(.*?\)/g, '');
     str = str.replace(/\[.*?\]/g, '');
     str = str.replace(/\/.*?\//g, '');
     str = str.replace(/high|low|flat|falling|sharp|breathy|voiced|nasal/gi, '');
 
-    // Handle slash alternatives like "ga / kha" -> take first one
     if (str.includes('/')) {
       str = str.split('/')[0];
     }
-
     str = str.trim();
 
-    // Specialized phonetic mapping for crystal-clear enunciation
     const PHONETIC_MAP = {
       'ka': 'Kah',
       'kha': 'Kha',
@@ -118,7 +193,7 @@ class TibetanAudioEngine {
       'ö': 'Ur',
       'ü': 'Yoo',
 
-      // Combinations & Subscripts
+      // Combinations
       'kya': 'Cha',
       'khya': 'Chha',
       'gya': 'Jha',
@@ -142,7 +217,7 @@ class TibetanAudioEngine {
       'rla': 'Lah',
       'sla': 'Lah',
 
-      // Words & Mantras
+      // Curated Words
       'tashi delek': 'Tah-shee Deh-lek',
       'om mani padme hum': 'Ohm Mah-nee Pahd-may Hoom',
       'sangye': 'Sahng-gyay',
@@ -151,55 +226,79 @@ class TibetanAudioEngine {
       'lhasa': 'Hlah-sah',
       'thukje-che': 'Took-jay-chay',
       'thukje che': 'Took-jay-chay',
-      'bö-ke': 'Bö kay',
+      'bod skad': 'Bö kay',
       'chos': 'Chö',
-      'ting nge \'dzin': 'Ting-ngay-dzin'
     };
 
     const lower = str.toLowerCase();
-    if (PHONETIC_MAP[lower]) {
-      return PHONETIC_MAP[lower];
-    }
-
-    return str || 'Ah';
+    return PHONETIC_MAP[lower] || str || 'Ah';
   }
 
-  // Play crystal-clear phonetic pronunciation
-  playPhonetic(phoneticStr, toneType = 'high', duration = 0.6) {
+  /**
+   * Main speech function:
+   * Accepts both phonetic string AND Tibetan text.
+   * If a Windows Tibetan voice is available, speaks the actual authentic Tibetan script!
+   * Otherwise, speaks the normalized Roman phonetic string.
+   */
+  playPhonetic(phoneticStr, toneType = 'high', tibetanText = '') {
     if (typeof window === 'undefined') return;
 
-    const spokenText = this.normalizePhoneticForSpeech(phoneticStr);
+    // Check voices if not loaded
+    if (this.voices.length === 0) {
+      this.refreshVoices();
+    }
 
-    // Play subtle soft bell harmonic in background for authentic tone feel
-    this.playSoftHarmonic(toneType === 'low' ? 190 : 260);
+    const tibetanVoice = this.getNativeTibetanVoice();
+    const shouldUseTibetanVoice = (this.voiceMode === 'tibetan' || (this.voiceMode === 'auto' && tibetanVoice)) && tibetanText;
+
+    // Subtle soft bell tone in background
+    this.playSoftHarmonic(toneType === 'low' ? 180 : 260);
 
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel(); // Stop any pending speech
+      window.speechSynthesis.cancel(); // Clear any queued speech
 
-      const utterance = new SpeechSynthesisUtterance(spokenText);
-      const voice = this.getBestVoice();
-      if (voice) {
-        utterance.voice = voice;
-      }
+      let textToSpeak = '';
+      let targetVoice = null;
+      let targetLang = 'en-US';
 
-      // Pitch: Elevate slightly for High Tone, lower for Low Tone to teach tones audibly
-      if (toneType === 'high' || toneType === 'high flat (55)') {
-        utterance.pitch = 1.15;
-      } else if (toneType === 'low' || toneType === 'low level (13)' || toneType === 'low falling (12)') {
-        utterance.pitch = 0.90;
+      if (shouldUseTibetanVoice && tibetanVoice) {
+        // NATIVE TIBETAN PRONUNCIATION VIA WINDOWS TIBETAN VOICE
+        textToSpeak = tibetanText;
+        targetVoice = this.selectedVoice && this.selectedVoice.lang.toLowerCase().startsWith('bo') ? this.selectedVoice : tibetanVoice;
+        targetLang = targetVoice.lang || 'bo-CN';
       } else {
-        utterance.pitch = 1.0;
+        // Fallback: Clear phonetic approximation
+        textToSpeak = this.normalizePhoneticForSpeech(phoneticStr);
+        targetVoice = this.selectedVoice || this.getFallbackVoice();
+        targetLang = targetVoice ? targetVoice.lang : 'en-US';
       }
 
-      // Slightly slower speech rate so every consonant aspiration is crystal clear
-      utterance.rate = 0.85;
-      utterance.volume = 1.0;
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      if (targetVoice) {
+        utterance.voice = targetVoice;
+      }
+      utterance.lang = targetLang;
 
+      // Rate and pitch adjustments
+      if (shouldUseTibetanVoice) {
+        utterance.rate = 0.85; // slightly deliberate for pristine learning
+        utterance.pitch = 1.0;
+      } else {
+        utterance.pitch = toneType === 'high' ? 1.15 : 0.90;
+        utterance.rate = 0.85;
+      }
+
+      utterance.volume = 1.0;
       window.speechSynthesis.speak(utterance);
     }
   }
 
-  // Subtle clean acoustic chime accompanying the pronunciation
+  // Convenient alias
+  playTibetan(tibetanText, phoneticFallback = '', toneType = 'high') {
+    this.playPhonetic(phoneticFallback || tibetanText, toneType, tibetanText);
+  }
+
+  // Soft crystalline harmonic ding
   playSoftHarmonic(freq = 240) {
     try {
       this.initContext();
@@ -211,7 +310,6 @@ class TibetanAudioEngine {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, t);
 
-      // Very soft background bell chime (0.04 gain)
       gain.gain.setValueAtTime(0.04, t);
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
 
@@ -223,7 +321,7 @@ class TibetanAudioEngine {
     } catch (e) {}
   }
 
-  // Play Traditional Spelling Chant (Jor-lok) with clear articulate recitation
+  // Play Traditional Spelling Chant (Jor-lok)
   playChantFormula(steps, onStepCallback) {
     if (!Array.isArray(steps) || steps.length === 0) return;
     if (typeof window === 'undefined') return;
@@ -232,20 +330,21 @@ class TibetanAudioEngine {
       window.speechSynthesis.cancel();
     }
 
+    const tibetanVoice = this.getNativeTibetanVoice();
+
     let delay = 0;
     steps.forEach((step, index) => {
       setTimeout(() => {
         if (onStepCallback) onStepCallback(index, step);
 
-        const textToSpeak = step.text
-          .replace(/->/g, 'becomes')
-          .replace(/Ta/g, 'Tra')
-          .replace(/\(.*?\)/g, '')
-          .trim();
-
         if ('speechSynthesis' in window) {
+          const textToSpeak = step.text
+            .replace(/->/g, 'becomes')
+            .replace(/\(.*?\)/g, '')
+            .trim();
+
           const utterance = new SpeechSynthesisUtterance(textToSpeak);
-          const voice = this.getBestVoice();
+          const voice = this.getFallbackVoice();
           if (voice) utterance.voice = voice;
           utterance.rate = 0.9;
           utterance.pitch = 1.05;
@@ -253,11 +352,11 @@ class TibetanAudioEngine {
         }
       }, delay);
 
-      delay += 1100; // Give each step 1.1 seconds to finish speaking cleanly
+      delay += 1150;
     });
   }
 
-  // UI Sound Effects
+  // UI Sounds
   playSuccessSound() {
     try {
       this.initContext();
@@ -266,10 +365,10 @@ class TibetanAudioEngine {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, t); // C5
-      osc.frequency.setValueAtTime(659.25, t + 0.08); // E5
-      osc.frequency.setValueAtTime(783.99, t + 0.16); // G5
-      osc.frequency.setValueAtTime(1046.50, t + 0.24); // C6
+      osc.frequency.setValueAtTime(523.25, t);
+      osc.frequency.setValueAtTime(659.25, t + 0.08);
+      osc.frequency.setValueAtTime(783.99, t + 0.16);
+      osc.frequency.setValueAtTime(1046.50, t + 0.24);
 
       gain.gain.setValueAtTime(0.12, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
@@ -325,7 +424,7 @@ class TibetanAudioEngine {
       this.initContext();
       if (!this.ctx) return;
       const t = this.ctx.currentTime;
-      const fundamental = 261.63; // C4 Singing bowl
+      const fundamental = 261.63;
       const harmonics = [1, 2.76, 5.4, 8.9];
       const gains = [0.22, 0.10, 0.05, 0.02];
 
